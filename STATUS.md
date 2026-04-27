@@ -1,5 +1,5 @@
 # English Buddy — Project Status
-> Last updated: 2026-04-27
+> Last updated: 2026-04-27 (session 2)
 
 ---
 
@@ -11,7 +11,8 @@
 - **`VoiceButton.jsx`** — Large tap target with three states: idle / listening (pulsing red) / disabled (when Maya is speaking or thinking).
 
 ### ✅ Phase 2 — AI Conversation
-- **`claudeService.js`** — Calls Groq API (llama-3.3-70b-versatile). OpenAI-compatible format. Uses `response_format: { type: 'json_object' }` for guaranteed JSON output. Key in `VITE_GROQ_API_KEY`. Returns `{ reply, script, feedback }`.
+- **`claudeService.js`** — Calls `/api/chat` (Vercel serverless proxy). The proxy calls Groq (llama-3.3-70b-versatile) server-side so the API key is never exposed in the browser bundle. Returns `{ reply, script, feedback }`.
+- **`api/chat.js`** — Vercel serverless function that forwards requests to Groq using `GROQ_API_KEY` (server-side env var, not prefixed with `VITE_`).
 - **`useConversation.js`** — Manages full message history, sends to Groq, returns `{ reply, script, feedback }`. Has `sendMessage()` for student turns and `kickoff()` for Maya's opening greeting.
 - **`ConversationView.jsx`** — Chat UI. User messages right (indigo), Maya messages left (slate). Shows live transcription while user speaks, animated loading dots while Maya thinks. Scroll-to-bottom only triggers on new messages (not on every interim word).
 - **Auto voice loop** — After Maya finishes speaking, mic starts automatically. Hands-free conversation flow.
@@ -52,10 +53,12 @@
 - `vite-plugin-pwa` installed and configured. Manifest generated automatically via `vite.config.js`.
 - Installable on Android home screen from Chrome.
 
-### ✅ Deployed to Vercel
+### ✅ Deployed to Vercel + GitHub CI/CD
 - Production URL: **https://english-buddy-blue.vercel.app**
-- `VITE_GROQ_API_KEY` set as Vercel environment variable (baked in at build time).
-- To redeploy after changes: `git commit` → `vercel --prod --yes`
+- GitHub repo: **https://github.com/pujxn/english-buddy**
+- `GROQ_API_KEY` set as server-side Vercel env var (never reaches the browser).
+- Auto-deploy on every push to `main` via GitHub Actions (`.github/workflows/deploy.yml`).
+- Deploy workflow: `git add . && git commit -m "..." && git push` — that's it.
 
 ---
 
@@ -103,7 +106,7 @@
 - **Occasional TTS stutter** — Chrome's Google voice chunks audio server-side; stitch points can land mid-word. Punctuation normalisation reduces but doesn't eliminate this. Real fix: paid TTS API (ElevenLabs, OpenAI TTS).
 - **AI misinterpretation of broken English** — 70b handles this better than 8b, but still slips on very broken input.
 - **Indian voice quality** — `en-IN` Chrome voice sounds stereotyped. Acceptable as a starting point; proper fix requires paid TTS.
-- **API key exposed in browser** — `VITE_GROQ_API_KEY` is embedded in the JS bundle. Fine for NGO-controlled internal deployment; for public production, route through a Vercel Edge Function.
+- ~~**API key exposed in browser**~~ — Fixed. Key moved server-side via `api/chat.js` Vercel function. `GROQ_API_KEY` is never bundled into the frontend.
 - **Chrome only** — Firefox and Safari do not support the Web Speech API.
 
 ---
@@ -112,14 +115,19 @@
 
 ```bash
 cd english-buddy
-npm run dev        # localhost:5173
-npm run build      # production build
-vercel --prod --yes  # deploy to production
+npm run dev   # localhost:5173
 ```
 
-**Required env var** in `.env` (local) and Vercel project settings (production):
+**Deploy** — just push to GitHub, Actions handles the rest:
+```bash
+git add .
+git commit -m "your message"
+git push
 ```
-VITE_GROQ_API_KEY=gsk_...
+
+**Required env var** in `.env` (local) and as a Vercel server-side env var (production):
+```
+GROQ_API_KEY=gsk_...
 ```
 
 **Chrome only** — Firefox and Safari do not support the Web Speech API.
