@@ -1,24 +1,9 @@
 import { parseFeedback } from '../utils/feedbackParser'
 
-const API_KEY = import.meta.env.VITE_GROQ_API_KEY
-const API_URL = 'https://api.groq.com/openai/v1/chat/completions'
-
-/**
- * Calls Groq with the full conversation history and returns { reply, feedback }.
- *
- * Groq uses the OpenAI-compatible format:
- * - API key in Authorization header as a Bearer token
- * - System prompt as the first message with role 'system'
- * - Roles are 'user' and 'assistant' — no remapping needed
- * - response_format: json_object guarantees valid JSON output
- */
 export async function askClaude({ messages, systemPrompt }) {
-  const response = await fetch(API_URL, {
+  const response = await fetch('/api/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${API_KEY}`,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 1024,
