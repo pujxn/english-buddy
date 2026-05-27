@@ -59,6 +59,7 @@ export function useSpeechInput(onFinalResult) {
       rec.onerror = (event) => {
         if (event.error === 'no-speech') return
         if (event.error === 'aborted')   return  // programmatic stop — not a real error
+        if (restartingRef.current)       return  // transient errors during mic handoff — ignore
         setError(event.error)
         sessionActiveRef.current = false
         setIsListening(false)
