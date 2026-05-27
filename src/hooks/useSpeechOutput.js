@@ -50,10 +50,13 @@ function getPreferredVoice(accent) {
 
 function normalizeText(text) {
   return text
-    .replace(/!/g, '.')
-    .replace(/[,;:\-–—]/g, ' ')
+    .replace(/!/g, '.')          // ! causes Chrome TTS to spike volume — use period instead
+    .replace(/[–—]/g, ',')       // em/en dashes → comma (natural pause, not a hard stop)
     .replace(/\s+/g, ' ')
     .trim()
+  // NOTE: commas, semicolons, question marks kept intentionally —
+  // they give the TTS engine natural pause/prosody cues.
+  // Removing them was making Maya sound flat and robotic.
 }
 
 function makeUtterance(text, voice, lang) {
@@ -85,6 +88,7 @@ export function useSpeechOutput(accent = 'american') {
 
     const lang = (ACCENT_LANGS[accent] || ['en-US'])[0]
     const voice = getPreferredVoice(accent)
+    console.log('[TTS] voice:', voice?.name, '| localService:', voice?.localService, '| lang:', voice?.lang)
     const u = makeUtterance(normalizeText(text), voice, lang)
     u.onstart = () => setIsSpeaking(true)
     u.onend   = () => setIsSpeaking(false)
