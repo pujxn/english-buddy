@@ -9,6 +9,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        skipWaiting: true,    // new SW activates immediately on deploy
+        clientsClaim: true,   // takes over all open tabs right away
+      },
       manifest: {
         name: 'English Buddy',
         short_name: 'EnglishBuddy',
