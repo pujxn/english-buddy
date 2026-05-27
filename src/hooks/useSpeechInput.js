@@ -51,6 +51,7 @@ export function useSpeechInput(onFinalResult) {
 
       rec.onerror = (event) => {
         if (event.error === 'no-speech') return
+        if (event.error === 'aborted') return  // fired when .stop() is called programmatically — not a real error
         setError(event.error)
         sessionActiveRef.current = false
         setIsListening(false)
