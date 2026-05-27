@@ -8,10 +8,11 @@ export function useSpeechInput(onFinalResult) {
   const [liveText, setLiveText] = useState('')
   const [error, setError] = useState(null)
 
-  const accumulatedRef = useRef('')
+  const accumulatedRef  = useRef('')
   const sessionActiveRef = useRef(false) // true while user wants mic open
-  const submittedRef = useRef(false)     // prevents double-submission on race
-  const recognitionRef = useRef(null)
+  const submittedRef    = useRef(false)  // prevents double-submission
+  const restartingRef   = useRef(false)  // true while we're killing old session to start a new one
+  const recognitionRef  = useRef(null)
 
   const startListening = useCallback(() => {
     if (!SpeechRecognition) {
@@ -19,9 +20,12 @@ export function useSpeechInput(onFinalResult) {
       return
     }
 
-    // Stop any existing session first
-    sessionActiveRef.current = false
-    recognitionRef.current?.stop()
+    // If a session is already running, mark as restarting so the old onend is ignored
+    if (recognitionRef.current) {
+      restartingRef.current = true
+      sessionActiveRef.current = false
+      recognitionRef.current.stop()
+    }
 
     accumulatedRef.current = ''
     sessionActiveRef.current = true
@@ -35,7 +39,10 @@ export function useSpeechInput(onFinalResult) {
       rec.continuous = false
       rec.interimResults = true
 
-      rec.onstart = () => setIsListening(true)
+      rec.onstart = () => {
+        restartingRef.current = false  // new session is live — restart complete
+        setIsListening(true)
+      }
 
       rec.onresult = (event) => {
         let interim = ''
@@ -51,13 +58,16 @@ export function useSpeechInput(onFinalResult) {
 
       rec.onerror = (event) => {
         if (event.error === 'no-speech') return
-        if (event.error === 'aborted') return  // fired when .stop() is called programmatically — not a real error
+        if (event.error === 'aborted')   return  // programmatic stop — not a real error
         setError(event.error)
         sessionActiveRef.current = false
         setIsListening(false)
       }
 
       rec.onend = () => {
+        // If we're in the middle of a restart, the old instance's onend fires here — ignore it
+        if (restartingRef.current) return
+
         if (sessionActiveRef.current) {
           // Chrome auto-ended on a pause — spawn a fresh instance to keep listening
           const next = spawn()
