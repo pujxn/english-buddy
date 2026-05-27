@@ -14,7 +14,8 @@ const PREFERRED_NAMES = {
   // Then best macOS local voices as fallback
   american: [
     'Google US English',               // Chrome Android/Windows network voice
-    'Flo (English (United States))',   // macOS Ventura+ neural (best if Enhanced downloaded)
+    'Fiona',                           // macOS Sequoia Enhanced — clear and natural
+    'Flo (English (United States))',   // macOS Ventura+ neural
     'Reed (English (United States))',  // macOS Ventura+ neural male
     'Samantha',                        // macOS classic Siri voice — reliable fallback
   ],
