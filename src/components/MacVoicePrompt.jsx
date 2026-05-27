@@ -57,7 +57,7 @@ export function MacVoicePrompt() {
           2. Click <span className="text-white font-medium">System Voice → Manage Voices</span>
         </li>
         <li className="text-slate-300">
-          3. Find <span className="text-white font-medium">Flo (English (United States))</span> and download <span className="text-white font-medium">Enhanced</span>
+          3. Find any <span className="text-white font-medium">English (United States)</span> voice with a ⬇️ download button and download it
         </li>
         <li className="text-slate-300">
           4. Reload this page — Maya will sound noticeably better
