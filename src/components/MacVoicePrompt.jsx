@@ -57,7 +57,7 @@ export function MacVoicePrompt() {
           2. Click <span className="text-white font-medium">System Voice → Manage Voices</span>
         </li>
         <li className="text-slate-300">
-          3. Find any <span className="text-white font-medium">English (United States)</span> voice with a ⬇️ download button and download it
+          3. Find <span className="text-white font-medium">Fiona Enhanced</span> and download it (or any other English voice with a ⬇️ icon)
         </li>
         <li className="text-slate-300">
           4. Reload this page — Maya will sound noticeably better
