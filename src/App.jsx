@@ -6,10 +6,17 @@ import { ConversationView } from './components/ConversationView'
 import { FeedbackCard } from './components/FeedbackCard'
 import { ScriptReader } from './components/ScriptReader'
 import { VoiceButton } from './components/VoiceButton'
+import { MicPermissionError } from './components/MicPermissionError'
 import { useSpeechInput } from './hooks/useSpeechInput'
 import { useSpeechOutput } from './hooks/useSpeechOutput'
 import { useConversation } from './hooks/useConversation'
 import { TOPICS } from './data/topics'
+
+function formatTime(secs) {
+  const m = String(Math.floor(secs / 60)).padStart(2, '0')
+  const s = String(secs % 60).padStart(2, '0')
+  return `${m}:${s}`
+}
 
 export default function App() {
   const [scenario, setScenario] = useState('free')
@@ -18,6 +25,17 @@ export default function App() {
   const [started, setStarted] = useState(false)
   const [assistedMode, setAssistedMode] = useState(false)
 
+  // Session timer
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    if (!started) { setElapsed(0); return }
+    const id = setInterval(() => setElapsed(s => s + 1), 1000)
+    return () => clearInterval(id)
+  }, [started])
+
+  // Track Maya's last reply so the student can replay it
+  const [lastMayaReply, setLastMayaReply] = useState('')
+
   const { messages, feedback, script, isThinking, error, sendMessage, kickoff } =
     useConversation(scenario)
 
@@ -25,7 +43,10 @@ export default function App() {
 
   const handleUserSpeech = useCallback(async (text) => {
     const reply = await sendMessage(text)
-    if (reply) speak(reply)
+    if (reply) {
+      setLastMayaReply(reply)
+      speak(reply)
+    }
   }, [sendMessage, speak])
 
   const { isListening, liveText, error: micError, startListening, stopListening } =
@@ -41,7 +62,12 @@ export default function App() {
   useEffect(() => {
     if (!started) return
     const topic = TOPICS[scenario].find(t => t.id === topicId)
-    kickoff(topic?.prompt).then(reply => { if (reply) speak(reply) })
+    kickoff(topic?.prompt).then(reply => {
+      if (reply) {
+        setLastMayaReply(reply)
+        speak(reply)
+      }
+    })
   }, [started, kickoff])
 
   // Auto-start mic when Maya finishes speaking
@@ -57,7 +83,12 @@ export default function App() {
     else startListening()
   }
 
-  const apiError = error || micError
+  const handleRepeat = useCallback((text) => {
+    stop()
+    speak(text)
+  }, [stop, speak])
+
+  const apiError = error || (micError && micError !== 'not-allowed' ? micError : null)
 
   // ── Start screen ────────────────────────────────────────────────────────────
   if (!started) {
@@ -93,6 +124,8 @@ export default function App() {
 
   return (
     <div className="h-dvh bg-slate-900 flex flex-col max-w-lg mx-auto">
+
+      {/* Header */}
       <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
         <button
           onClick={() => { stop(); setStarted(false) }}
@@ -102,9 +135,12 @@ export default function App() {
         </button>
         <div className="text-center">
           <p className="text-white font-semibold text-sm">English Buddy 🇮🇳</p>
-          {currentTopic && (
-            <p className="text-slate-400 text-xs">{currentTopic.label}</p>
-          )}
+          <p className="text-slate-400 text-xs">
+            {currentTopic?.label}
+            {elapsed > 0 && (
+              <span className="text-slate-500"> · {formatTime(elapsed)}</span>
+            )}
+          </p>
         </div>
         <button
           onClick={() => setAssistedMode(m => !m)}
@@ -118,28 +154,39 @@ export default function App() {
         </button>
       </div>
 
-      <ConversationView messages={messages} liveText={liveText} isThinking={isThinking} />
+      {/* Mic permission denied — replace the conversation area */}
+      {micError === 'not-allowed' ? (
+        <MicPermissionError onRetry={() => startListening()} />
+      ) : (
+        <ConversationView
+          messages={messages}
+          liveText={liveText}
+          isThinking={isThinking}
+          onRepeat={handleRepeat}
+        />
+      )}
 
       {apiError && (
         <p className="text-center text-red-400 text-xs px-4 pb-2">⚠️ {apiError}</p>
       )}
 
       {assistedMode && script && (
-        <ScriptReader
-          script={script}
-          isListening={isListening}
-        />
+        <ScriptReader script={script} isListening={isListening} />
       )}
 
       <FeedbackCard feedback={feedback} />
 
-      <div className="py-5 flex justify-center border-t border-slate-800">
+      {/* Footer — mic button */}
+      <div className="py-5 flex flex-col items-center gap-2 border-t border-slate-800">
         <VoiceButton
           isListening={isListening}
           isSpeaking={isSpeaking}
           isThinking={isThinking}
           onClick={handleMicButton}
         />
+        <p className="text-slate-500 text-xs h-4">
+          {isListening ? 'Listening…' : isSpeaking ? 'Maya is speaking…' : isThinking ? 'Thinking…' : 'Tap to speak'}
+        </p>
       </div>
     </div>
   )
