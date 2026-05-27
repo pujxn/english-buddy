@@ -7,6 +7,7 @@ import { FeedbackCard } from './components/FeedbackCard'
 import { ScriptReader } from './components/ScriptReader'
 import { VoiceButton } from './components/VoiceButton'
 import { MicPermissionError } from './components/MicPermissionError'
+import { MacVoicePrompt } from './components/MacVoicePrompt'
 import { useSpeechInput } from './hooks/useSpeechInput'
 import { useSpeechOutput } from './hooks/useSpeechOutput'
 import { useConversation } from './hooks/useConversation'
@@ -101,6 +102,7 @@ export default function App() {
             <p className="text-slate-400 text-sm">Your AI speaking coach. Pick a scenario and start practising.</p>
           </div>
 
+          <MacVoicePrompt />
           <ScenarioSelector selected={scenario} onSelect={handleScenarioChange} />
           <TopicSelector mode={scenario} selected={topicId} onSelect={setTopicId} />
           <AccentSelector selected={accent} onSelect={setAccent} />
