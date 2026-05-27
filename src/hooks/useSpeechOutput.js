@@ -10,10 +10,29 @@ const ACCENT_LANGS = {
 // Ordered preference list of known high-quality voice names per accent.
 // Chrome (desktop/Android) has Google voices; iOS has Apple voices.
 const PREFERRED_NAMES = {
-  american:   ['Google US English', 'Samantha', 'Karen'],
-  british:    ['Google UK English Female', 'Google UK English Male', 'Daniel', 'Martha'],
-  australian: ['Google Australian English', 'Karen'],
-  indian:     ['Google UK English Female', 'Samantha'],   // en-IN is robotic — use a better fallback
+  // Network voices (🌐) first — Android Chrome / Windows Chrome
+  // Then best macOS local voices as fallback
+  american: [
+    'Google US English',               // Chrome Android/Windows network voice
+    'Flo (English (United States))',   // macOS Ventura+ neural (best if Enhanced downloaded)
+    'Reed (English (United States))',  // macOS Ventura+ neural male
+    'Samantha',                        // macOS classic Siri voice — reliable fallback
+  ],
+  british: [
+    'Google UK English Female',
+    'Google UK English Male',
+    'Flo (English (United Kingdom))',
+    'Daniel',
+  ],
+  australian: [
+    'Google Australian English',
+    'Karen',
+  ],
+  indian: [
+    'Google UK English Female',
+    'Flo (English (United States))',
+    'Samantha',
+  ],
 }
 
 function getPreferredVoice(accent) {
